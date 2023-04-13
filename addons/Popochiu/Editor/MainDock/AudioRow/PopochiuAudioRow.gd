@@ -77,18 +77,8 @@ func _ready() -> void:
 		_label.text = audio_cue.resource_name
 		name = audio_cue.resource_name
 		
-		_menu_popup.remove_item(
-			_menu_popup.get_item_index(MenuOptions.ADD_TO_MUSIC)
-		)
-		_menu_popup.remove_item(
-			_menu_popup.get_item_index(MenuOptions.ADD_TO_SFX)
-		)
-		_menu_popup.remove_item(
-			_menu_popup.get_item_index(MenuOptions.ADD_TO_VOICE)
-		)
-		_menu_popup.remove_item(
-			_menu_popup.get_item_index(MenuOptions.ADD_TO_UI)
-		)
+		for idx in range(4):
+			_menu_popup.set_item_disabled(idx, true)
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ PUBLIC ░░░░
@@ -228,13 +218,6 @@ func _remove_in_audio_manager() -> void:
 			PopochiuResources.erase_data_value('audio', cue_group)
 		else:
 			PopochiuResources.set_data_value('audio', cue_group, group_data)
-	
-	# ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-	# Remove the AudioCue from the A singleton
-	PopochiuResources.remove_audio_autoload(
-		cue_group, name, audio_cue.resource_path
-	)
-	main_dock.fs.update_script_classes()
 	
 	# Add the audio file to the "Not assigned" group
 	emit_signal('deleted', audio_cue.audio.resource_path)

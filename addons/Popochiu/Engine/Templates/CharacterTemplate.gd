@@ -1,17 +1,13 @@
 tool
 extends PopochiuCharacter
+# You can use E.run([]) to trigger a sequence of events.
+# Use yield(E.run([]), 'completed') if you want to pause the excecution of
+# the function until the sequence of events finishes.
 
-const Data := preload('CharacterStateTemplate.gd')
-
-var state: Data = null
+var state: PopochiuCharacterData = null
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ VIRTUAL ░░░░
-# When the PopochiuRoom where this node was already loaded
-func on_room_set() -> void:
-	pass
-
-
 # When the node is clicked
 func on_interact() -> void:
 	# Replace the call to .on_interact() to implement your code. This only makes

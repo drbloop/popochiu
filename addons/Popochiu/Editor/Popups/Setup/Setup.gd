@@ -1,8 +1,6 @@
 tool
 extends AcceptDialog
 
-signal move_requested(id)
-
 const ImporterDefaults :=\
 preload('res://addons/Popochiu/Engine/Others/ImporterDefaults.gd')
 const SCALE_MESSAGE :=\
@@ -21,9 +19,6 @@ onready var _game_height: SpinBox = find_node('GameHeight')
 onready var _test_width: SpinBox = find_node('TestWidth')
 onready var _test_height: SpinBox = find_node('TestHeight')
 onready var _game_type: OptionButton = find_node('GameType')
-onready var _advanced: HBoxContainer = find_node('Advanced')
-onready var _btn_move_gi: Button = find_node('BtnMoveGI')
-onready var _btn_move_tl: Button = find_node('BtnMoveTL')
 onready var _btn_update_imports: Button = find_node('BtnUpdateFiles')
 
 
@@ -33,14 +28,9 @@ func _ready() -> void:
 	connect('popup_hide', self, '_update_project_settings')
 	_game_width.connect('value_changed', self, '_update_scale')
 	_game_height.connect('value_changed', self, '_update_scale')
-	_btn_move_gi.connect('pressed', self, '_move_gi')
-	_btn_move_tl.connect('pressed', self, '_move_tl')
 	_btn_update_imports.connect('pressed', self, '_update_imports')
 	
 	# Set default state
-	_advanced.hide()
-	_btn_move_gi.hide()
-	_btn_move_tl.hide()
 	_btn_update_imports.hide()
 
 
@@ -60,8 +50,6 @@ func appear(show_welcome := false) -> void:
 	if show_welcome:
 		_welcome.show()
 		_welcome_separator.show()
-	else:
-		update_state()
 	
 	# Set initial values for fields
 	_game_width.value = ProjectSettings.get_setting(PopochiuResources.DISPLAY_WIDTH)
@@ -88,19 +76,6 @@ func appear(show_welcome := false) -> void:
 	get_ok().text = 'Close'
 
 
-func update_state() -> void:
-	_advanced.hide()
-	_btn_move_gi.hide()
-	
-	if not PopochiuResources.get_data_value('setup', 'gi_moved', false):
-		_advanced.show()
-		_btn_move_gi.show()
-	
-	if not PopochiuResources.get_data_value('setup', 'tl_moved', false):
-		_advanced.show()
-		_btn_move_tl.show()
-
-
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ PRIVATE ░░░░
 func _update_project_settings() -> void:
 	ProjectSettings.set_setting('display/window/size/width', int(_game_width.value))
@@ -114,12 +89,12 @@ func _update_project_settings() -> void:
 
 		if _game_type.selected == 1:
 			ProjectSettings.set_setting(
-				PopochiuResources.IMPORTER_TEXTURE, ## TODO: move everything in settings (refs #26)
+				'importer_defaults/texture',
 				null
 			)
 		else:
 			ProjectSettings.set_setting(
-				PopochiuResources.IMPORTER_TEXTURE,
+				'importer_defaults/texture',
 				ImporterDefaults.PIXEL_TEXTURES
 			)
 	else:
@@ -145,16 +120,6 @@ func _get_scale_msg() -> String:
 		('light' if es.get_setting('interface/theme/preset').find('Light') > -1\
 		else 'dark'),
 	]
-
-
-func _move_gi() -> void:
-	_btn_move_gi.disabled = true
-	emit_signal('move_requested', PopochiuResources.GI)
-
-
-func _move_tl() -> void:
-	_btn_move_tl.disabled = true
-	emit_signal('move_requested', PopochiuResources.TL)
 
 
 func _update_imports() -> void:

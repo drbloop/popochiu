@@ -15,11 +15,7 @@ var _input_actions :=\
 preload('res://addons/Popochiu/Engine/Others/InputActions.gd')
 var _shown_helpers := []
 var _export_plugin: EditorExportPlugin = null
-var _inspector_plugins := [
-	load('res://addons/Popochiu/Editor/Inspector/AsepriteImporterInspectorPlugin.gd').new(),
-	load('res://addons/Popochiu/Editor/Inspector/CharacterInspectorPlugin.gd').new(),
-	load('res://addons/Popochiu/Editor/Inspector/WalkableAreaInspectorPlugin.gd').new(),
-]
+var _inspector_plugin: EditorInspectorPlugin = null
 var _selected_node: Node = null
 var _vsep := VSeparator.new()
 var _btn_baseline := Button.new()
@@ -27,9 +23,6 @@ var _btn_walk_to := Button.new()
 var _types_helper: Resource = null
 var _tool_btn_stylebox :=\
 _editor_interface.get_base_control().get_stylebox("normal", "ToolButton")
-
-## TODO: refs #26: use this as base to migrate the configuration to ProjectSettings
-var config = preload("res://addons/Popochiu/Editor/Config/Config.gd").new()
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ GODOT ░░░░
@@ -43,12 +36,11 @@ func _init() -> void:
 	add_autoload_singleton('U', PopochiuResources.UTILS_SNGL)
 	add_autoload_singleton('Cursor', PopochiuResources.CURSOR_SNGL)
 	add_autoload_singleton('E', PopochiuResources.POPOCHIU_SNGL)
-	add_autoload_singleton('R', PopochiuResources.R_SNGL)
-	add_autoload_singleton('C', PopochiuResources.C_SNGL)
-	add_autoload_singleton('I', PopochiuResources.I_SNGL)
-	add_autoload_singleton('D', PopochiuResources.D_SNGL)
+	add_autoload_singleton('C', PopochiuResources.ICHARACTER_SNGL)
+	add_autoload_singleton('I', PopochiuResources.IINVENTORY_SNGL)
+	add_autoload_singleton('D', PopochiuResources.IDIALOG_SNGL)
 	add_autoload_singleton('G', PopochiuResources.IGRAPHIC_INTERFACE_SNGL)
-	add_autoload_singleton('A', PopochiuResources.A_SNGL)
+	add_autoload_singleton('A', PopochiuResources.IAUDIO_MANAGER_SNGL)
 
 
 func _enter_tree() -> void:
@@ -65,20 +57,11 @@ func _enter_tree() -> void:
 	
 	_export_plugin = preload('PopochiuExportPlugin.gd').new()
 	add_export_plugin(_export_plugin)
-
-
-	## TODO: Clean up when Popochiu configuration is moved to ProjectSettings (refs #26)
-	config.ei = _editor_interface
-	config.initialize_project_settings()
-
-
-	for ip in _inspector_plugins:
-		ip.ei = _editor_interface
-		ip.fs = _editor_file_system
-		ip.config = config
-		add_inspector_plugin(ip)
-
-
+	
+	_inspector_plugin = load('res://addons/Popochiu/PopochiuInspectorPlugin.gd').new()
+	_inspector_plugin.ei = _editor_interface
+	add_inspector_plugin(_inspector_plugin)
+	
 	main_dock = load(PopochiuResources.MAIN_DOCK_PATH).instance()
 	main_dock.ei = _editor_interface
 	main_dock.fs = _editor_file_system
@@ -114,17 +97,12 @@ func _enter_tree() -> void:
 	
 	main_dock.scene_changed(_editor_interface.get_edited_scene_root())
 	main_dock.setup_dialog.es = _editor_interface.get_editor_settings()
-	main_dock.setup_dialog.connect('move_requested', self, '_move_to_project')
 	
 	if PopochiuResources.get_section('setup').empty():
 		main_dock.setup_dialog.appear(true)
 		(main_dock.setup_dialog as AcceptDialog).connect(
-			'popup_hide', self, '_set_setup_done'
+			'popup_hide', self, '_move_addon_folders'
 		)
-	
-	PopochiuResources.update_autoloads(true)
-	_editor_file_system.update_script_classes()
-	_editor_file_system.scan_sources()
 
 
 func _exit_tree() -> void:
@@ -137,15 +115,9 @@ func _exit_tree() -> void:
 	
 	if is_instance_valid(_export_plugin):
 		remove_export_plugin(_export_plugin)
-
-	# Inspector plugins
-	for ip in _inspector_plugins:
-		if is_instance_valid(ip):
-			remove_inspector_plugin(ip)
-
-
-func get_plugin_name() -> String:
-	return 'Popochiu'
+	
+	if is_instance_valid(_inspector_plugin):
+		remove_inspector_plugin(_inspector_plugin)
 
 
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ VIRTUAL ░░░░
@@ -162,8 +134,28 @@ func enable_plugin() -> void:
 		ad.dialog_text =\
 		'[es] Reinicia el motor para completar la instalación:\n' +\
 		'Proyecto > Volver a Cargar el Proyecto Actual\n\n' + \
-		'[en] Restart Godot to complete the installation:\n' +\
+		'[en] Restart Godot to complete the instalation:\n' +\
 		'Project > Reload Current Project'
+#		var rtl := RichTextLabel.new()
+		
+#		rtl.rect_min_size = Vector2(640.0, 128.0)
+#		rtl.margin_left = 0.0
+#		rtl.margin_top = 0.0
+#		rtl.margin_right = 0.0
+#		rtl.margin_bottom = 0.0
+#		rtl.bbcode_enabled = true
+#		rtl.fit_content_height = true
+#		rtl.add_stylebox_override('normal', rtl.get_stylebox("Content", "EditorStyles"))
+#		rtl.append_bbcode(\
+#		'[es] Reinicia el motor para completar la instalación ([b]Proyecto > Volver a Cargar el Proyecto Actual[/b]).\n' + \
+#		'[en] Restart Godot to complete the instalation ([b]Project > Reload Current Project[/b]).'
+#		)
+#
+#		ad.add_child(rtl)
+#		prints('>>>', rtl.get_font('main', 'EditorFonts'))
+#		rtl.add_font_override('normal_font', rtl.get_font('main', 'EditorFonts'))
+#		rtl.add_font_override('bold_font', rtl.get_font("doc_source", 'EditorFonts'))
+#		ad.set_as_minsize()
 		
 		_editor_interface.get_base_control().add_child(ad)
 		ad.popup_centered()
@@ -225,8 +217,32 @@ func _remove_input_actions() -> void:
 	assert(result == OK, '[Popochiu] Failed to save project settings.')
 
 
-# Marks setup as done in PopochiuData.cfg
-func _set_setup_done() -> void:
+func _move_addon_folders() -> void:
+	# Move files and folders so developer can overwrite them
+#	_directory.rename(
+#		PopochiuResources.GRAPHIC_INTERFACE_ADDON.get_base_dir(),
+#		PopochiuResources.GRAPHIC_INTERFACE_POPOCHIU.get_base_dir()
+#	)
+#	_directory.rename(
+#		PopochiuResources.TRANSITION_LAYER_ADDON.get_base_dir(),
+#		PopochiuResources.TRANSITION_LAYER_POPOCHIU.get_base_dir()
+#	)
+	
+	# Refresh FileSystem
+#	_editor_file_system.scan()
+
+	# Fix dependencies
+#	yield(_editor_file_system, 'filesystem_changed')
+#	yield(_check_popochiu_dependencies(), 'completed')
+	
+	# Save settings
+#	var settings := PopochiuResources.get_settings()
+#	settings.graphic_interface = load(PopochiuResources.GRAPHIC_INTERFACE_POPOCHIU)
+#	settings.transition_layer = load(PopochiuResources.TRANSITION_LAYER_POPOCHIU)
+#
+#	PopochiuResources.save_settings(settings)
+	
+	# Mark setup as done in PopochiuData.cfg
 	PopochiuResources.set_data_value('setup', 'done', true)
 
 
@@ -407,38 +423,3 @@ func _select_baseline() -> void:
 		_editor_interface.edit_node(_selected_node.get_node('BaselineHelper'))
 	else:
 		_editor_interface.edit_node(_selected_node.get_node('../BaselineHelper'))
-
-
-func _move_to_project(id: int) -> void:
-	# Move files and folders so developer can overwrite them
-	if id == PopochiuResources.GI:
-		_directory.rename(
-			PopochiuResources.GRAPHIC_INTERFACE_ADDON.get_base_dir(),
-			PopochiuResources.GRAPHIC_INTERFACE_POPOCHIU.get_base_dir()
-		)
-	elif id == PopochiuResources.TL:
-		_directory.rename(
-			PopochiuResources.TRANSITION_LAYER_ADDON.get_base_dir(),
-			PopochiuResources.TRANSITION_LAYER_POPOCHIU.get_base_dir()
-		)
-	
-	# Refresh FileSystem
-	_editor_file_system.scan()
-
-	# Fix dependencies
-	yield(_editor_file_system, 'filesystem_changed')
-	yield(_check_popochiu_dependencies(), 'completed')
-	
-	# Save settings
-	var settings := PopochiuResources.get_settings()
-	
-	if id == PopochiuResources.GI:
-		settings.graphic_interface = load(PopochiuResources.GRAPHIC_INTERFACE_POPOCHIU)
-		PopochiuResources.set_data_value('setup', 'gi_moved', true)
-	elif id == PopochiuResources.TL:
-		settings.transition_layer = load(PopochiuResources.TRANSITION_LAYER_POPOCHIU)
-		PopochiuResources.set_data_value('setup', 'tl_moved', true)
-	
-	PopochiuResources.save_settings(settings)
-	
-	main_dock.setup_dialog.update_state()

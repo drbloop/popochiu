@@ -54,43 +54,6 @@ func on_discard() -> void:
 	pass
 
 
-# ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ PUBLIC ░░░░
-func add(animate := true) -> void:
-	yield()
-	
-	yield(I.add_item(script_name, false, animate), 'completed')
-
-
-func add_now(animate := true) -> void:
-	yield(I.add_item(script_name, false, animate), 'completed')
-
-
-func add_as_active(animate := true) -> void:
-	yield()
-	
-	yield(I.add_item(script_name, false, animate), 'completed')
-	I.set_active_item(self, true)
-
-
-func add_as_active_now(animate := true) -> void:
-	yield(I.add_item(script_name, false, animate), 'completed')
-	I.set_active_item(self, false)
-
-
-func remove(animate := true) -> void:
-	yield()
-	
-	yield(I.remove_item(script_name, false, animate), 'completed')
-
-
-func remove_now(animate := true) -> void:
-	yield(I.remove_item(script_name, false, animate), 'completed')
-
-
-func set_active(ignore_block := false) -> void:
-	I.set_active_item(self, ignore_block)
-
-
 # ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ SET & GET ░░░░
 func set_in_inventory(value: bool) -> void:
 	in_inventory = value

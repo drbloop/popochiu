@@ -5,7 +5,6 @@ extends PanelContainer
 
 signal create_clicked
 
-const Constants := preload('res://addons/Popochiu/PopochiuResources.gd')
 const PopochiuObjectRow := preload('res://addons/Popochiu/Editor/MainDock/ObjectRow/PopochiuObjectRow.gd')
 
 export var icon: Texture setget _set_icon
@@ -67,11 +66,7 @@ func add(node: Node) -> void:
 
 func clear_favs() -> void:
 	for por in _list.get_children():
-		if (por as PopochiuObjectRow).type == Constants.Types.ROOM:
-			(por as PopochiuObjectRow).is_main = false
-		
-		if (por as PopochiuObjectRow).type == Constants.Types.CHARACTER:
-			(por as PopochiuObjectRow).is_pc = false
+		(por as PopochiuObjectRow).is_main = false
 
 
 func disable_create() -> void:
